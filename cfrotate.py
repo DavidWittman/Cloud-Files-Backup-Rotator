@@ -14,9 +14,11 @@ class CloudFilesRotate(object):
     >>> cfr.rotate("/var/www/html", 7)
     >>> (123, 119)
     """
-    def __init__(self, username, apikey, container, **kwargs):
+    def __init__(self, username, apikey, container, snet=False):
         self.DATE_FORMAT = "%Y-%m-%dT%H%M"
-        self.connection = cloudfiles.get_connection(username, apikey)
+        self.connection = cloudfiles.get_connection(username, 
+                                                    apikey,
+                                                    servicenet=snet)
         try:
             self.container = self.connection.get_container(container)
         except cloudfiles.errors.NoSuchContainer:
@@ -92,23 +94,29 @@ def get_args():
         return os.environ.get(e, '')
 
     parser = ArgumentParser(description="A backup rotator for use with Rackspace Cloud Files.")
-    parser.add_argument('-u', '--username',
+
+    auth_group = parser.add_argument_group('Authentication Options')
+    auth_group.add_argument('-u', '--username',
                         dest = 'username',
                         default = env('CLOUD_FILES_USERNAME'),
                         help = "Defaults to env[CLOUD_FILES_USERNAME]")
-    parser.add_argument('-k', '--apikey',
+    auth_group.add_argument('-k', '--apikey',
                         dest = 'apikey',
                         default = env('CLOUD_FILES_APIKEY'),
                         help = "Defaults to env[CLOUD_FILES_APIKEY]")
-    parser.add_argument('-s', '--snet',
+    auth_group.add_argument('-s', '--snet',
                         action = 'store_true',
                         dest = 'snet',
                         help = "Use ServiceNet for connections",
                         default = False)
-    parser.add_argument('-r', '--rotate',
+
+    backup_group = parser.add_argument_group('Backup Options')
+    backup_group.add_argument('-r', '--rotate',
                         dest = 'count',
                         help = "Number of backups to rotate",
+                        type = int,
                         default = 7)
+
     parser.add_argument('container')
     parser.add_argument('path')
 
@@ -117,7 +125,10 @@ def get_args():
 
 def main():
     args = get_args()
-    cfr = CloudFilesRotate(args.username, args.apikey, args.container)
+    cfr = CloudFilesRotate(args.username, 
+                           args.apikey, 
+                           args.container,
+                           args.snet)
     (added, removed) = cfr.rotate(args.path, args.count)
     print "%d file(s) uploaded.\n%d file(s) removed." % (added, removed)
 

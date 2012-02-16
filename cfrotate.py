@@ -16,11 +16,15 @@ class CloudFilesRotate(object):
     """
     def __init__(self, username, apikey, container, snet=False):
         self.DATE_FORMAT = "%Y-%m-%dT%H%M"
-        self.connection = cloudfiles.get_connection(username, 
-                                                    apikey,
-                                                    servicenet=snet)
         try:
+            self.connection = cloudfiles.get_connection(username, 
+                                                        apikey,
+                                                        servicenet=snet,
+                                                        timeout=15)
             self.container = self.connection.get_container(container)
+        except cloudfiles.errors.AuthenticationFailed:
+            print "Error authenticating with Cloud Files API"
+            raise SystemExit(1)
         except cloudfiles.errors.NoSuchContainer:
             self.container = self.connection.create_container(container)
 
@@ -120,8 +124,15 @@ def get_args():
     parser.add_argument('container')
     parser.add_argument('path')
 
-    # TODO: check arguments
-    return parser.parse_args()
+    return check_args(parser.parse_args())
+
+def check_args(args):
+    required = [ "username", "apikey" ]
+    for k in required:
+        if not hasattr(args, k) or getattr(args, k) is '':
+            print "Error: Missing %s argument." % k
+            raise SystemExit(1)
+    return args
 
 def main():
     args = get_args()

@@ -121,8 +121,10 @@ def get_args():
                         type = int,
                         default = 7)
 
-    parser.add_argument('container')
-    parser.add_argument('path')
+    parser.add_argument('container',
+                        help = "Cloud Files Container for the backup")
+    parser.add_argument('path',
+                        help = "File or directory to backup")
 
     return check_args(parser.parse_args())
 

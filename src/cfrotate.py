@@ -71,7 +71,7 @@ class CloudFilesRotate(object):
         delete_count = 0
 
         obj_list = self.container.list_objects(delimiter='/')
-        n = len(obj_list) - count
+        n = (len(obj_list) > count) and len(obj_list) - count or 0
         oldest = sorted(obj_list)[:n]
         for prefix in oldest:
             old_objs = self.container.get_objects(prefix=prefix)

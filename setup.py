@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 __author__ = "David Wittman <david@wittman.com>"
 NAME = "cfrotate"
@@ -15,5 +15,9 @@ setup(name = NAME,
       author_email = "david@wittman.com",
       license = "BSD",
       install_requires = REQS,
-      scripts = [ 'src/cfrotate' ]
+      packages = find_packages(),
+      entry_points = """
+        [console_scripts]
+        cfrotate = src.cfrotate:main
+        """
      )

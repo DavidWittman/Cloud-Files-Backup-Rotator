@@ -35,6 +35,11 @@ class CloudFilesRotate(object):
                 for file in files:
                     zipped.write(os.path.join(root, file))
 
+        # is this a path ending in /, in which case we get empty zip 
+        # filename, so fix it
+        if len(os.path.basename(path)) ==0 and path.endswith('/'):
+            # chop off the last /
+            path = path[:-1]
         filename = os.path.join(tempdir, os.path.basename(path) + '.zip')
         zipped = zipfile.ZipFile(filename, 'w')
         _zipdir(path, zipped)

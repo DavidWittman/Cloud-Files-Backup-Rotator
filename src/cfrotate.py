@@ -40,7 +40,7 @@ class CloudFilesRotate(object):
         if len(os.path.basename(path)) ==0 and path.endswith('/'):
             # chop off the last /
             path = path[:-1]
-            if path = '/':
+            if path == '/':
                 # if this is / then lets call it root
                 'root'
         filename = os.path.join(tempdir, os.path.basename(path) + '.zip')

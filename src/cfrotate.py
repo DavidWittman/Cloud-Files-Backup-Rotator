@@ -42,8 +42,11 @@ class CloudFilesRotate(object):
             path = path[:-1]
             if path == '/':
                 # if this is / then lets call it root
-                'root'
-        filename = os.path.join(tempdir, os.path.basename(path) + '.zip')
+                filename ='root'
+            else:
+                filename = os.path.join(tempdir, os.path.basename(path)+ '.zip')
+        else:
+            filename = os.path.join(tempdir, os.path.basename(path)+ '.zip')
         zipped = zipfile.ZipFile(filename, 'w')
         _zipdir(path, zipped)
         self.compressed = True

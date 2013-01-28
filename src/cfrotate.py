@@ -35,18 +35,14 @@ class CloudFilesRotate(object):
                 for file in files:
                     zipped.write(os.path.join(root, file))
 
-        # is this a path ending in /, in which case we get empty zip 
-        # filename, so fix it
-        if len(os.path.basename(path)) ==0 and path.endswith('/'):
-            # chop off the last /
-            path = path[:-1]
-            if path == '/':
-                # if this is / then lets call it root
-                filename ='root.zip'
-            else:
-                filename = os.path.join(tempdir, os.path.basename(path)+ '.zip')
+        if path == '/':
+            filename = os.path.join(tempdir, 'root.zip')
+        elif path.endswith('/'):
+            filename = os.path.join(tempdir, os.path.basename(path[:-1])
+                                             + '.zip')
         else:
-            filename = os.path.join(tempdir, os.path.basename(path)+ '.zip')
+            filename = os.path.join(tempdir, os.path.basename(path) + '.zip')
+
         zipped = zipfile.ZipFile(filename, 'w')
         _zipdir(path, zipped)
         self.compressed = True
@@ -110,8 +106,8 @@ def get_args():
         return os.environ.get(e, '')
 
     parser = ArgumentParser(description="A backup rotator for use with "\
-                                        "Rackspace Cloud Files and Openstack "\
-                                        "swift.")
+                                        "Rackspace Cloud Files and OpenStack "\
+                                        "Swift.")
 
     auth_group = parser.add_argument_group('Authentication Options')
     auth_group.add_argument('-u', '--username',
@@ -122,11 +118,10 @@ def get_args():
                         dest = 'apikey',
                         default = env('CLOUD_FILES_APIKEY'),
                         help = "Defaults to env[CLOUD_FILES_APIKEY]")
-    auth_group.add_argument("-a", "--auth", 
+    auth_group.add_argument("-a", "--auth_url", 
                         dest = "auth_url", 
-                        metavar = "<auth_url>", 
-                        help = "Authentiction end point."\
-                               "Defaults to env[CLOUD_FILE_AUTH_URL]",
+                        help = "Authentication endpoint. "\
+                               "Defaults to env[CLOUD_FILES_AUTH_URL]",
                         default = env('CLOUD_FILES_AUTH_URL') )
     auth_group.add_argument('-s', '--snet',
                         action = 'store_true',

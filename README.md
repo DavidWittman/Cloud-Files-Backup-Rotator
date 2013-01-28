@@ -1,5 +1,5 @@
 # Cloud Files Backup Rotator
-A backup rotation script for use with Rackspace Cloud Files. Work in progress.
+A backup rotation script for use with Rackspace Cloud Files, and Openstack Swift Work in progress.
 
 ### Installation
 

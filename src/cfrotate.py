@@ -10,16 +10,17 @@ import cloudfiles
 
 class CloudFilesRotate(object):
     """ 
-    >>> cfr = CloudFilesRotate("username", "apikey", "container")
+    >>> cfr = CloudFilesRotate("username", "apikey", "container", "auth_url")
     >>> cfr.rotate("/var/www/html", 7)
     >>> (123, 119)
     """
-    def __init__(self, username, apikey, container, snet=False):
+    def __init__(self, username, apikey, container,auth_url, snet=False):
         self.DATE_FORMAT = "%Y-%m-%dT%H%M"
         try:
             self.connection = cloudfiles.get_connection(username, 
                                                         apikey,
                                                         servicenet=snet,
+                                                        authurl=auth_url,
                                                         timeout=15)
             self.container = self.connection.get_container(container)
         except cloudfiles.errors.AuthenticationFailed:
@@ -34,7 +35,18 @@ class CloudFilesRotate(object):
                 for file in files:
                     zipped.write(os.path.join(root, file))
 
-        filename = os.path.join(tempdir, os.path.basename(path) + '.zip')
+        # is this a path ending in /, in which case we get empty zip 
+        # filename, so fix it
+        if len(os.path.basename(path)) ==0 and path.endswith('/'):
+            # chop off the last /
+            path = path[:-1]
+            if path == '/':
+                # if this is / then lets call it root
+                filename ='root.zip'
+            else:
+                filename = os.path.join(tempdir, os.path.basename(path)+ '.zip')
+        else:
+            filename = os.path.join(tempdir, os.path.basename(path)+ '.zip')
         zipped = zipfile.ZipFile(filename, 'w')
         _zipdir(path, zipped)
         self.compressed = True
@@ -97,7 +109,9 @@ def get_args():
     def env(e):
         return os.environ.get(e, '')
 
-    parser = ArgumentParser(description="A backup rotator for use with Rackspace Cloud Files.")
+    parser = ArgumentParser(description="A backup rotator for use with "\
+                                        "Rackspace Cloud Files and Openstack "\
+                                        "swift.")
 
     auth_group = parser.add_argument_group('Authentication Options')
     auth_group.add_argument('-u', '--username',
@@ -108,12 +122,17 @@ def get_args():
                         dest = 'apikey',
                         default = env('CLOUD_FILES_APIKEY'),
                         help = "Defaults to env[CLOUD_FILES_APIKEY]")
+    auth_group.add_argument("-a", "--auth", 
+                        dest = "auth_url", 
+                        metavar = "<auth_url>", 
+                        help = "Authentiction end point."\
+                               "Defaults to env[CLOUD_FILE_AUTH_URL]",
+                        default = env('CLOUD_FILES_AUTH_URL') )
     auth_group.add_argument('-s', '--snet',
                         action = 'store_true',
                         dest = 'snet',
                         help = "Use ServiceNet for connections",
                         default = False)
-
     backup_group = parser.add_argument_group('Backup Options')
     backup_group.add_argument('-r', '--rotate',
                         dest = 'count',
@@ -129,7 +148,7 @@ def get_args():
     return check_args(parser.parse_args())
 
 def check_args(args):
-    required = [ "username", "apikey" ]
+    required = [ "username", "apikey", "auth_url" ]
     for k in required:
         if not hasattr(args, k) or getattr(args, k) is '':
             print "Error: Missing %s argument." % k
@@ -141,6 +160,7 @@ def main():
     cfr = CloudFilesRotate(args.username, 
                            args.apikey, 
                            args.container,
+                           args.auth_url,
                            args.snet)
     (added, removed) = cfr.rotate(args.path, args.count)
     print "%d file(s) uploaded.\n%d file(s) removed." % (added, removed)

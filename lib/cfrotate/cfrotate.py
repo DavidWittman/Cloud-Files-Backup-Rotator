@@ -3,7 +3,6 @@
 import os
 import sys
 import zipfile
-from argparse import ArgumentParser
 from datetime import datetime
 
 import cloudfiles
@@ -100,65 +99,3 @@ class CloudFilesRotate(object):
             os.remove(path)
 
         return (upload_count, delete_count)
-
-def get_args():
-    def env(e):
-        return os.environ.get(e, '')
-
-    parser = ArgumentParser(description="A backup rotator for use with "\
-                                        "Rackspace Cloud Files and OpenStack "\
-                                        "Swift.")
-
-    auth_group = parser.add_argument_group('Authentication Options')
-    auth_group.add_argument('-u', '--username',
-                        dest = 'username',
-                        default = env('CLOUD_FILES_USERNAME'),
-                        help = "Defaults to env[CLOUD_FILES_USERNAME]")
-    auth_group.add_argument('-k', '--apikey',
-                        dest = 'apikey',
-                        default = env('CLOUD_FILES_APIKEY'),
-                        help = "Defaults to env[CLOUD_FILES_APIKEY]")
-    auth_group.add_argument("-a", "--auth_url", 
-                        dest = "auth_url", 
-                        help = "Authentication endpoint. "\
-                               "Defaults to env[CLOUD_FILES_AUTH_URL]",
-                        default = env('CLOUD_FILES_AUTH_URL') )
-    auth_group.add_argument('-s', '--snet',
-                        action = 'store_true',
-                        dest = 'snet',
-                        help = "Use ServiceNet for connections",
-                        default = False)
-    backup_group = parser.add_argument_group('Backup Options')
-    backup_group.add_argument('-r', '--rotate',
-                        dest = 'count',
-                        help = "Number of backups to rotate",
-                        type = int,
-                        default = 7)
-
-    parser.add_argument('container',
-                        help = "Cloud Files Container for the backup")
-    parser.add_argument('path',
-                        help = "File or directory to backup")
-
-    return check_args(parser.parse_args())
-
-def check_args(args):
-    required = [ "username", "apikey", "auth_url" ]
-    for k in required:
-        if not hasattr(args, k) or getattr(args, k) is '':
-            print "Error: Missing %s argument." % k
-            raise SystemExit(1)
-    return args
-
-def main():
-    args = get_args()
-    cfr = CloudFilesRotate(args.username, 
-                           args.apikey, 
-                           args.container,
-                           args.auth_url,
-                           args.snet)
-    (added, removed) = cfr.rotate(args.path, args.count)
-    print "%d file(s) uploaded.\n%d file(s) removed." % (added, removed)
-
-if __name__ == '__main__':
-    main()

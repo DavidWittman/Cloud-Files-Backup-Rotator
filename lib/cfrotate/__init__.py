@@ -1,0 +1,1 @@
+from cfrotate import CloudFilesRotate
